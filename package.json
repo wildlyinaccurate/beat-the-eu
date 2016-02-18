@@ -6,7 +6,7 @@
   "jsnext:main": "src/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rollup --format iife --config rollup.config.js --output build/app.js && ln -sf $PWD/node_modules/phaser/dist/phaser.min.js build/phaser.js"
+    "build": "rollup --format iife --config rollup.config.js --output build/app.js && cp node_modules/phaser/dist/phaser.min.js build/phaser.js"
   },
   "keywords": [
     "eu",
