@@ -1,1 +1,1 @@
-../node_modules/phaser/dist/phaser.min.js
+/Users/joseph/Code/beat-the-eu/node_modules/phaser/dist/phaser.min.js
