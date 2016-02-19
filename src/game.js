@@ -1,6 +1,8 @@
 import { gameWidth, gameHeight } from './settings'
 import dialogue from './dialogue'
 
+const defaultEasing = Phaser.Easing.Linear.None
+
 export default class MainGame {
   constructor () {
     this.frozen = false
@@ -35,13 +37,9 @@ export default class MainGame {
     this.dialogueText.setTextBounds(0, 0, gameWidth, 60)
     this.nextDialogue()
 
-    this.spaceBar.onUp.add(() => {
-      this.explodeShit()
-    })
+    this.spaceBar.onUp.add(() => this.explodeShit())
 
-    this.cursors.right.onDown.addOnce(() => {
-      this.nextDialogue()
-    })
+    this.cursors.right.onDown.addOnce(() => this.nextDialogue())
   }
 
   update () {
@@ -67,6 +65,10 @@ export default class MainGame {
     }
   }
 
+  walkTo (player, x, autoStart = false) {
+    return this.game.add.tween(player).to({ x }, 1500, defaultEasing, autoStart)
+  }
+
   startBeataSzydloDialogue () {
     this.beataStarted = true
     this.frozen = true
@@ -74,7 +76,7 @@ export default class MainGame {
     this.beata = this.makePlayer(gameWidth * 1.1, 'beata', true)
 
     const beataWalk = x => {
-      const tween = this.game.add.tween(this.beata).to({ x }, 1500, Phaser.Easing.Linear.None, true)
+      const tween = this.walkTo(this.beata, x, true)
 
       tween.onStart.addOnce(() => {
         this.beata.play('left')
@@ -89,7 +91,7 @@ export default class MainGame {
     }
 
     const beataEnter = beataWalk(this.player.x + 240)
-    const daveBackUp = this.game.add.tween(this.player).to({ x: this.player.x - 50 }, 1500, Phaser.Easing.Linear.None, false)
+    const daveBackUp = this.walkTo(this.player, this.player.x - 50)
 
     beataEnter.onComplete.addOnce(() => {
       this.nextDialogue()
@@ -97,7 +99,7 @@ export default class MainGame {
       setTimeout(() => {
         this.player.play('right')
         daveBackUp.start()
-      }, 1000)
+      }, 1600)
     })
 
     daveBackUp.onComplete.addOnce(() => {
@@ -105,11 +107,8 @@ export default class MainGame {
       this.player.animations.stop()
       this.facing = 'right'
 
-      beataWalk(this.beata.x - 40)
-
-      setTimeout(() => {
-        this.nextDialogue()
-      }, 3000)
+      setTimeout(() => beataWalk(this.beata.x - 40), 1000)
+      setTimeout(() => this.nextDialogue(), 3200)
     })
   }
 
@@ -121,20 +120,18 @@ export default class MainGame {
     explosion.play('kaboom', 30, false, true)
 
     boom.onComplete.addOnce(() => {
-      const beataDie = this.game.add.tween(this.beata).to({ alpha: 0 }, 200, Phaser.Easing.Linear.None, true)
+      const beataDie = this.unmakePlayer(this.beata)
 
-      beataDie.onComplete.addOnce(() => {
-        this.nextDialogue()
-      })
+      beataDie.onComplete.addOnce(() => this.nextDialogue())
     })
   }
 
   makePlayer (xPos, faceSprite, cpu = false) {
     const player = this.game.add.sprite(xPos, gameHeight - 48 * 2, 'dude')
-    const face = this.game.make.sprite(-6, -30, faceSprite)
+    player.face = this.game.make.sprite(-6, -30, faceSprite)
 
     player.scale.set(2)
-    player.addChild(face)
+    player.addChild(player.face)
     player.animations.add('left', [0, 1, 2, 3], 10, true)
     player.animations.add('turn', [4], 20, true)
     player.animations.add('right', [5, 6, 7, 8], 10, true)
@@ -147,6 +144,14 @@ export default class MainGame {
     }
 
     return player
+  }
+
+  unmakePlayer (player) {
+    const tween = this.game.add.tween(player).to({ alpha: 0 }, 200, defaultEasing, true)
+
+    tween.onComplete.addOnce(() => player.kill())
+
+    return tween
   }
 
   nextDialogue () {
