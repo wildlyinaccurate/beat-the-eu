@@ -21,6 +21,7 @@ export default class MainGame {
     this.load.image('beata', 'assets/beata.png')
     this.game.load.image('bullet', 'assets/bullet.png');
     this.game.load.spritesheet('kaboom', 'assets/explosion.png', 64, 64, 23);
+    this.game.load.image('bbc', 'assets/bbc-news.png');
   }
 
   create () {
@@ -35,9 +36,8 @@ export default class MainGame {
 
     this.dialogueText = this.game.add.text(0, 0, '', textStyle)
     this.dialogueText.setTextBounds(0, 0, gameWidth, 60)
+    this.dialogueText.setShadow(0, 0, 'rgba(255, 255, 255, 0.5)', 3)
     this.nextDialogue()
-
-    this.spaceBar.onUp.add(() => this.explodeShit())
 
     this.cursors.right.onDown.addOnce(() => this.nextDialogue())
   }
@@ -60,7 +60,7 @@ export default class MainGame {
       }
     }
 
-    if (this.player.body.position.x > 240 && !this.beataStarted) {
+    if (this.player.body.position.x > 320 && !this.beataStarted) {
       this.startBeataSzydloDialogue()
     }
   }
@@ -108,21 +108,55 @@ export default class MainGame {
       this.facing = 'right'
 
       setTimeout(() => beataWalk(this.beata.x - 40), 1000)
-      setTimeout(() => this.nextDialogue(), 3200)
+      setTimeout(() => {
+        this.spaceBar.onUp.addOnce(() => this.explodeShit())
+        this.nextDialogue()
+      }, 3200)
     })
   }
 
   explodeShit () {
-    const explosion = this.game.add.sprite(this.beata.x - 32, this.beata.y - 32, 'kaboom')
+    const explosion = this.game.add.sprite(this.beata.x - 48, this.beata.y - 54, 'kaboom')
     const boom = explosion.animations.add('kaboom')
 
-    explosion.scale.set(2)
+    explosion.scale.set(3)
     explosion.play('kaboom', 30, false, true)
 
     boom.onComplete.addOnce(() => {
       const beataDie = this.unmakePlayer(this.beata)
 
-      beataDie.onComplete.addOnce(() => this.nextDialogue())
+      beataDie.onComplete.addOnce(() => {
+        this.nextDialogue()
+
+        setTimeout(() => this.fuckYeahBBC(), 2000)
+      })
+    })
+  }
+
+  fuckYeahBBC () {
+    this.nextDialogue()
+
+    const bbc = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'bbc')
+
+    bbc.alpha = 0
+    bbc.anchor.setTo(0.5, 0.5)
+    bbc.scale.set(0.1)
+
+    this.game.add.tween(bbc).to({ alpha: 1}, 1400, defaultEasing, true)
+
+    const wowee = this.game.add.tween(bbc.scale).to({ x: 1.2, y: 1.2 }, 4000, defaultEasing, true)
+
+    wowee.onComplete.addOnce(() => {
+      const impartial = this.game.add.text(0, -32, 'Free impartial EU Referendum coverage', {
+        font: 'bold 36px Arial',
+        fill: '#11f',
+        boundsAlignH: 'center',
+        boundsAlignV: 'middle'
+      })
+
+      impartial.angle = 15
+      impartial.setTextBounds(0, 0, gameWidth, 60)
+      impartial.setShadow(1, 1, 'rgba(255, 255, 255, 0.6)', 3)
     })
   }
 
