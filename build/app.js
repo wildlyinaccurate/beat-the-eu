@@ -43,20 +43,20 @@
   var gameHeight = 240;
 
   var cpuTextColour = '#f22';
-  var playerTextColour = '#aaf';
+  var playerTextColour = '#48f';
 
   var empty = ['', { fill: '#000' }];
   var info = function info(text) {
     return ['<' + text + '>', { fill: '#fff', font: '18px monospace' }];
   };
   var cpu = function cpu(text) {
-    return [text, { fill: cpuTextColour, font: '18px Arial' }];
+    return [text, { fill: cpuTextColour, font: '20px Arial' }];
   };
   var player = function player(text) {
-    return [text, { fill: playerTextColour, font: '18px Arial' }];
+    return [text, { fill: playerTextColour, font: '20px Arial' }];
   };
 
-  var dialogue = [empty, info('Press the arrow keys to move'), info("You can only move in one direction. There's no going back now."), cpu('David, I am with you on this. but your welfare conditions need to be ironed out.'), // http://www.bbc.co.uk/news/uk-politics-eu-referendum-35499139
+  var dialogue = [empty, info('Press the arrow keys to move'), info("You can only move in one direction. There's no going back now."), cpu('David, I am with you on this. But your welfare conditions need to be ironed out.'), // http://www.bbc.co.uk/news/uk-politics-eu-referendum-35499139
   player("Beata, let's be diplomatic. I am willing to negotiate."), info('Press [space] to negotiate'), player('Sorry, Beata. I am battling for Britain.'), // http://www.bbc.co.uk/news/uk-politics-eu-referendum-35599279
 
   empty];
@@ -86,6 +86,7 @@
         this.load.image('beata', 'assets/beata.png');
         this.game.load.image('bullet', 'assets/bullet.png');
         this.game.load.spritesheet('kaboom', 'assets/explosion.png', 64, 64, 23);
+        this.game.load.image('bbc', 'assets/bbc-news.png');
       }
     }, {
       key: 'create',
@@ -103,11 +104,8 @@
 
         this.dialogueText = this.game.add.text(0, 0, '', textStyle);
         this.dialogueText.setTextBounds(0, 0, gameWidth, 60);
+        this.dialogueText.setShadow(0, 0, 'rgba(255, 255, 255, 0.5)', 3);
         this.nextDialogue();
-
-        this.spaceBar.onUp.add(function () {
-          return _this.explodeShit();
-        });
 
         this.cursors.right.onDown.addOnce(function () {
           return _this.nextDialogue();
@@ -133,7 +131,7 @@
           }
         }
 
-        if (this.player.body.position.x > 240 && !this.beataStarted) {
+        if (this.player.body.position.x > 320 && !this.beataStarted) {
           this.startBeataSzydloDialogue();
         }
       }
@@ -190,7 +188,10 @@
             return beataWalk(_this2.beata.x - 40);
           }, 1000);
           setTimeout(function () {
-            return _this2.nextDialogue();
+            _this2.spaceBar.onUp.addOnce(function () {
+              return _this2.explodeShit();
+            });
+            _this2.nextDialogue();
           }, 3200);
         });
       }
@@ -199,18 +200,52 @@
       value: function explodeShit() {
         var _this3 = this;
 
-        var explosion = this.game.add.sprite(this.beata.x - 32, this.beata.y - 32, 'kaboom');
+        var explosion = this.game.add.sprite(this.beata.x - 48, this.beata.y - 54, 'kaboom');
         var boom = explosion.animations.add('kaboom');
 
-        explosion.scale.set(2);
+        explosion.scale.set(3);
         explosion.play('kaboom', 30, false, true);
 
         boom.onComplete.addOnce(function () {
           var beataDie = _this3.unmakePlayer(_this3.beata);
 
           beataDie.onComplete.addOnce(function () {
-            return _this3.nextDialogue();
+            _this3.nextDialogue();
+
+            setTimeout(function () {
+              return _this3.fuckYeahBBC();
+            }, 2000);
           });
+        });
+      }
+    }, {
+      key: 'fuckYeahBBC',
+      value: function fuckYeahBBC() {
+        var _this4 = this;
+
+        this.nextDialogue();
+
+        var bbc = this.game.add.sprite(this.game.world.centerX, this.game.world.centerY, 'bbc');
+
+        bbc.alpha = 0;
+        bbc.anchor.setTo(0.5, 0.5);
+        bbc.scale.set(0.1);
+
+        this.game.add.tween(bbc).to({ alpha: 1 }, 1400, defaultEasing, true);
+
+        var wowee = this.game.add.tween(bbc.scale).to({ x: 1.2, y: 1.2 }, 4000, defaultEasing, true);
+
+        wowee.onComplete.addOnce(function () {
+          var impartial = _this4.game.add.text(0, -32, 'Free impartial EU Referendum coverage', {
+            font: 'bold 36px Arial',
+            fill: '#11f',
+            boundsAlignH: 'center',
+            boundsAlignV: 'middle'
+          });
+
+          impartial.angle = 15;
+          impartial.setTextBounds(0, 0, gameWidth, 60);
+          impartial.setShadow(1, 1, 'rgba(255, 255, 255, 0.6)', 3);
         });
       }
     }, {
