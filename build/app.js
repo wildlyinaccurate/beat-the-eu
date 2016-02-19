@@ -39,7 +39,7 @@
 
   babelHelpers;
 
-  var gameWidth = 1000;
+  var gameWidth = 960;
   var gameHeight = 240;
 
   var cpuTextColour = '#f22';
@@ -60,6 +60,8 @@
   player("Beata, let's be diplomatic. I am willing to negotiate."), info('Press [space] to negotiate'), player('Sorry, Beata. I am battling for Britain.'), // http://www.bbc.co.uk/news/uk-politics-eu-referendum-35599279
 
   empty];
+
+  var defaultEasing = Phaser.Easing.Linear.None;
 
   var MainGame = function () {
     function MainGame() {
@@ -104,11 +106,11 @@
         this.nextDialogue();
 
         this.spaceBar.onUp.add(function () {
-          _this.explodeShit();
+          return _this.explodeShit();
         });
 
         this.cursors.right.onDown.addOnce(function () {
-          _this.nextDialogue();
+          return _this.nextDialogue();
         });
       }
     }, {
@@ -136,6 +138,13 @@
         }
       }
     }, {
+      key: 'walkTo',
+      value: function walkTo(player, x) {
+        var autoStart = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+
+        return this.game.add.tween(player).to({ x: x }, 1500, defaultEasing, autoStart);
+      }
+    }, {
       key: 'startBeataSzydloDialogue',
       value: function startBeataSzydloDialogue() {
         var _this2 = this;
@@ -146,7 +155,7 @@
         this.beata = this.makePlayer(gameWidth * 1.1, 'beata', true);
 
         var beataWalk = function beataWalk(x) {
-          var tween = _this2.game.add.tween(_this2.beata).to({ x: x }, 1500, Phaser.Easing.Linear.None, true);
+          var tween = _this2.walkTo(_this2.beata, x, true);
 
           tween.onStart.addOnce(function () {
             _this2.beata.play('left');
@@ -161,7 +170,7 @@
         };
 
         var beataEnter = beataWalk(this.player.x + 240);
-        var daveBackUp = this.game.add.tween(this.player).to({ x: this.player.x - 50 }, 1500, Phaser.Easing.Linear.None, false);
+        var daveBackUp = this.walkTo(this.player, this.player.x - 50);
 
         beataEnter.onComplete.addOnce(function () {
           _this2.nextDialogue();
@@ -169,7 +178,7 @@
           setTimeout(function () {
             _this2.player.play('right');
             daveBackUp.start();
-          }, 1000);
+          }, 1600);
         });
 
         daveBackUp.onComplete.addOnce(function () {
@@ -177,11 +186,12 @@
           _this2.player.animations.stop();
           _this2.facing = 'right';
 
-          beataWalk(_this2.beata.x - 40);
-
           setTimeout(function () {
-            _this2.nextDialogue();
-          }, 3000);
+            return beataWalk(_this2.beata.x - 40);
+          }, 1000);
+          setTimeout(function () {
+            return _this2.nextDialogue();
+          }, 3200);
         });
       }
     }, {
@@ -196,10 +206,10 @@
         explosion.play('kaboom', 30, false, true);
 
         boom.onComplete.addOnce(function () {
-          var beataDie = _this3.game.add.tween(_this3.beata).to({ alpha: 0 }, 200, Phaser.Easing.Linear.None, true);
+          var beataDie = _this3.unmakePlayer(_this3.beata);
 
           beataDie.onComplete.addOnce(function () {
-            _this3.nextDialogue();
+            return _this3.nextDialogue();
           });
         });
       }
@@ -209,10 +219,10 @@
         var cpu = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
 
         var player = this.game.add.sprite(xPos, gameHeight - 48 * 2, 'dude');
-        var face = this.game.make.sprite(-6, -30, faceSprite);
+        player.face = this.game.make.sprite(-6, -30, faceSprite);
 
         player.scale.set(2);
-        player.addChild(face);
+        player.addChild(player.face);
         player.animations.add('left', [0, 1, 2, 3], 10, true);
         player.animations.add('turn', [4], 20, true);
         player.animations.add('right', [5, 6, 7, 8], 10, true);
@@ -225,6 +235,17 @@
         }
 
         return player;
+      }
+    }, {
+      key: 'unmakePlayer',
+      value: function unmakePlayer(player) {
+        var tween = this.game.add.tween(player).to({ alpha: 0 }, 200, defaultEasing, true);
+
+        tween.onComplete.addOnce(function () {
+          return player.kill();
+        });
+
+        return tween;
       }
     }, {
       key: 'nextDialogue',
